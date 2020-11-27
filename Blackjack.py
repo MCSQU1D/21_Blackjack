@@ -46,6 +46,9 @@ global Dealer_Threshold
 global Comp1_Player
 global Comp2_Player
 global Comp3_Player
+global Split_Deck
+global Has_Split
+global Bob
 
 buttonsDict = {}
 startcolour = [255,0,0]
@@ -78,8 +81,10 @@ Insurance = False
 Comp1_Player = 1
 Comp2_Player = 2
 Comp3_Player = 3
-
-
+Split_Deck = []
+Has_Split = False
+Bob = False
+Split_bet = 0
 
 global C
 global S
@@ -329,6 +334,7 @@ def setupdeck():
     Current_Card += 1
     Comp3_Hand.append(Deck[Current_Card])
     Current_Card += 1
+    Has_Split = False
 
 def Betting_SideBar():
     global Card_Suit
@@ -441,6 +447,9 @@ def printplaying():
     global Dealer_Shown_Card
     global Insurance
     global stats
+    global Has_Split
+    global Bob
+    global Split_bet
 
     PlayingList = ["Hit", "Stand", "Split", "Insure", "Surndr"]
     #buttonsDict = {(X, -X, Y, -Y) : operation/number}
@@ -581,6 +590,24 @@ def printplaying():
     if ButtonLocationPrintHolder == "Surrender":
         printend("Surrender")
         scene = "ending"
+
+    Card_Info(Player_Hand[0])
+    Card_1 = Card_Type
+    #print(Bob)
+    if Bob == False:
+        Card_Info(Player_Hand[1])
+        Card_2 = Card_Type
+        Card_9 = Player_Hand[1]
+
+    Card_6 = Player_Hand[0]
+    if ButtonLocationPrintHolder == "Split" and (stats["Cash"] - stats["Bet"]) >= 0 and Card_1 == Card_2:
+        Split_Deck.append(Card_9)
+        Player_Hand.remove(Card_9)
+        time.sleep(0.75)
+        Has_Split = True
+        Bob = True
+        Split_bet = stats["Bet"]
+        #scene = "ending"
 
     Card_Info(Dealer_Hand[0])
     Dealer_Shown_Card = str(Card_Suit)+str(Card_Type)
@@ -726,24 +753,36 @@ def printend(ending):
     if ending == "You Bust":
         text1 = "You Bust"
         stats["Loses"] += 1
+        if Bob == True:
+            stats["Cash"] -= Split_bet
     elif ending == "Lose":
         text1 = "You Lose"
         stats["Loses"] += 1
+        if Bob == True:
+            stats["Cash"] -= Split_bet
     elif ending == "Tie":
         text1 = "Tie"
         stats["Cash"] += stats["Bet"]
+        if Bob == True:
+            stats["Cash"] += Split_bet
     elif ending == "Win":
         text1 = "You Win"
         stats["Wins"] += 1
         stats["Cash"] += 2*(stats["Bet"])
+        if Bob == True:
+            stats["Cash"] += 2*Split_bet
     elif ending == "Dealer Bust":
         text1 = "Dealer Bust"
         stats["Wins"] += 1
         stats["Cash"] += 2*(stats["Bet"])
+        if Bob == True:
+            stats["Cash"] += 2*Split_bet
     elif ending == "Surrender":
         text1 = "Surrender"
         stats["Loses"] += 1
         stats["Cash"] += 0.5*(stats["Bet"])
+        if Bob == True:
+            stats["Cash"] += 0.5*Split_bet
 
     else:
         text1 = "IDK"
@@ -906,7 +945,12 @@ while running == True:
 
     if scene == "ending":
         if ButtonLocationPrintHolder == "Play":
-            scene = "betting"
+            if Has_Split == True:
+                scene = "playing"
+                Player_Hand = Split_Deck
+                Has_Split = False
+            else:
+                scene = "betting"
 
 
     if ButtonLocationPrintHolder == "Decrease_Dealer_Threshold":
