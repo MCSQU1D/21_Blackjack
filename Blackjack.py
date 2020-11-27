@@ -43,6 +43,9 @@ global Deck
 global Playing_Colour
 global SideBar
 global Dealer_Threshold
+global Comp1_Player
+global Comp2_Player
+global Comp3_Player
 
 buttonsDict = {}
 startcolour = [255,0,0]
@@ -72,6 +75,9 @@ Comp1_Threshold = 14
 Comp2_Threshold = 18
 Comp3_Threshold = 1
 Insurance = False
+Comp1_Player = 1
+Comp2_Player = 2
+Comp3_Player = 3
 
 
 
@@ -130,12 +136,24 @@ def RainbowMachine(colour, a):
 def printstart():
     global ButtonLocationFinder
     global buttonsDict
+    global Comp1_Threshold
+    global Comp1_Threshold
+    global Comp1_Threshold
+    global Dealer_Threshold
+    global Players
+    global Comp1_Player
+    global Comp2_Player
+    global Comp3_Player
     #buttonsDict = {(X, -X, Y, -Y) : operation/number}
 
     buttonsDict = {
-    (550,750,400,500) : "Play"
+    (550,750,400,500) : "Play",
+    (980,1010,365,390) : "Decrease_Dealer_Threshold",
+    (1095,1120,365,390) : "Increase_Dealer_Threshold",
+    (910,1155,420,450) : "Change_Comp1_Threshold",
+    (910,1155,450,480) : "Change_Comp2_Threshold",
+    (910,1155,480,510) : "Change_Comp3_Threshold"
     }
-
 
     screen.fill((60,60,60))
 
@@ -179,6 +197,55 @@ def printstart():
     textRect = text2.get_rect()
     textRect.center = ((display_width/2), 450)
     screen.blit(text2, textRect)
+
+
+
+    Players = ["Scott", "Malcolm", "Tony", "Kevin", "Julia", "John", "Paul", "Bob", "Gough", "William", "John"]
+
+    Player_Thresholds = {
+    "Scott" : 4,
+    "Malcolm" : 13,
+    "Tony" : 40,
+    "Kevin" : 9,
+    "Julia" : 17,
+    "John" : 21,
+    "Paul" : 15,
+    "Bob" : 14,     #Names are prime ministers incase you were wondering
+    "Gough" : 16,
+    "William" : 20,
+    "John" : 14
+    }
+
+    Comp1_Threshold = Player_Thresholds[Players[Comp1_Player-1]]
+    Comp2_Threshold = Player_Thresholds[Players[Comp2_Player-1]]
+    Comp3_Threshold = Player_Thresholds[Players[Comp3_Player-1]]
+
+    start_print_list = [
+    "Dealer Threshold:",
+    "<       " + str(Dealer_Threshold) + "       >",
+    "Players (click to change): ",
+    str(Players[Comp1_Player-1]),
+    str(Players[Comp2_Player-1]),
+    str(Players[Comp3_Player-1])
+    ]
+
+    Y_Start = 350
+
+    for i in start_print_list:
+        text2 = i
+        font = pygame.font.Font('Beon.otf', 30) #Font size
+        text2 = font.render(text2, True, (255,255,255)) #Font colour
+        textRect = text2.get_rect()
+        textRect.center = (1050, Y_Start)
+        screen.blit(text2, textRect)
+        Y_Start += 30
+
+
+
+
+
+
+
 
 def Draw_Cards(number):
     for Card_Drawn in range(number):
@@ -279,6 +346,10 @@ def Betting_SideBar():
     global Comp2_Threshold
     global Comp3_Threshold
     global Dealer_Shown_Card
+    global Players
+    global Comp1_Player
+    global Comp2_Player
+    global Comp3_Player
     Player_Value = 0
 
     s = pygame.Surface((1280,720)) # Size of Shadow
@@ -305,17 +376,16 @@ def Betting_SideBar():
 
 
 
-
     SideBar_List = [
     "Your Hand Value: ",
     str(Player_Value),
     "Dealer's Card: ",
     str(Dealer_Shown_Card),
-    "Bob's Hand Value: ",
+    Players[Comp1_Player-1] + "'s Hand Value: ",
     str(Hand_Value(Comp1_Hand)),
-    "Joe's Hand Value: ",
+    Players[Comp2_Player-1] + "'s Hand Value: ",
     str(Hand_Value(Comp2_Hand)),
-    "Karen's Hand Value: ",
+    Players[Comp3_Player-1] + "'s Hand Value: ",
     str(Hand_Value(Comp3_Hand))
     ]
 
@@ -484,7 +554,7 @@ def printplaying():
     if ButtonLocationPrintHolder == "Hit" and Player_Value < 21:
         Player_Hand.append(Deck[Current_Card])
         Current_Card += 1
-        time.sleep(0.5)
+        time.sleep(0.3)
 
     if Player_Value > 21:
         printend("You Bust")
@@ -507,6 +577,10 @@ def printplaying():
         elif Dealer_Value > 21:
             printend("Dealer Bust")
             scene = "ending"
+
+    if ButtonLocationPrintHolder == "Surrender":
+        printend("Surrender")
+        scene = "ending"
 
     Card_Info(Dealer_Hand[0])
     Dealer_Shown_Card = str(Card_Suit)+str(Card_Type)
@@ -666,6 +740,11 @@ def printend(ending):
         text1 = "Dealer Bust"
         stats["Wins"] += 1
         stats["Cash"] += 2*(stats["Bet"])
+    elif ending == "Surrender":
+        text1 = "Surrender"
+        stats["Loses"] += 1
+        stats["Cash"] += 0.5*(stats["Bet"])
+
     else:
         text1 = "IDK"
         stats["Cash"] += stats["Bet"]
@@ -692,7 +771,7 @@ def printend(ending):
         if Card_Value == "Ace":
             if Player_Value + 11 <= 21:
                 Player_Value += 11
-            if Player_Value + 11 > 21:
+            elif Player_Value + 11 > 21:
                 Player_Value += 1
         else:
             Player_Value += int(Card_Value)
@@ -829,6 +908,29 @@ while running == True:
         if ButtonLocationPrintHolder == "Play":
             scene = "betting"
 
+
+    if ButtonLocationPrintHolder == "Decrease_Dealer_Threshold":
+        Dealer_Threshold -= 1
+        time.sleep(0.3)
+    if ButtonLocationPrintHolder == "Increase_Dealer_Threshold":
+        Dealer_Threshold += 1
+        time.sleep(0.3)
+
+    if ButtonLocationPrintHolder == "Change_Comp1_Threshold":
+        Comp1_Player += 1
+        if Comp1_Player > (len(Players)-1):
+            Comp1_Player = 1
+        time.sleep(0.3)
+    if ButtonLocationPrintHolder == "Change_Comp2_Threshold":
+        Comp2_Player += 1
+        if Comp2_Player > (len(Players)-1):
+            Comp2_Player = 1
+        time.sleep(0.3)
+    if ButtonLocationPrintHolder == "Change_Comp3_Threshold":
+        Comp3_Player += 1
+        if Comp3_Player > (len(Players)-1):
+            Comp3_Player = 1
+        time.sleep(0.3)
 
 
 
